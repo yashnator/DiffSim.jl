@@ -1,0 +1,10 @@
+name = "DiffSim"
+uuid = "d2b358c9-6e69-4943-ae2d-28468d21b083"
+version = "0.0.1"
+
+[deps]
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+Optim = "429524aa-4258-5aef-a3af-852621145aeb"
+
+[compat]
+julia = "1.11"
