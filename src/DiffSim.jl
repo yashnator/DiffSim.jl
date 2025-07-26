@@ -3,8 +3,9 @@ module DiffSim
 using ForwardDiff
 using Optim
 
-export solve_initial_velocity, solve_constant_force, simulate_forward
-export ConstantForce, LinearDrag
+export solve_initial_velocity, solve_constant_force, solve_parameters, solve_parameters_with_velocity, simulate_forward
+export simulate_trajectory, plot_trajectory
+export ConstantForce, LinearDrag, QuadraticDrag, CallableForce
 
 abstract type Force end
 
@@ -16,12 +17,21 @@ struct LinearDrag{T} <: Force
     coefficient::T
 end
 
+struct CallableForce{F, P} <: Force
+    func::F
+    params::P
+end
+
 function apply_force(f::ConstantForce, pos, vel, t)
     return f.force
 end
 
 function apply_force(f::LinearDrag, pos, vel, t)
     return -f.coefficient * vel
+end
+
+function apply_force(f::CallableForce, pos, vel, t)
+    return f.func(pos, vel, t, f.params)
 end
 
 function step(pos, vel, forces, dt, t, mass=1.0)
@@ -81,6 +91,29 @@ function solve_constant_force(;
     n_dim = length(initial_position)
     initial_guess = zeros(n_dim)
     result = optimize(loss, grad!, initial_guess, LBFGS())
+    return Optim.minimizer(result), Optim.minimum(result)
+end
+
+function solve_parameters_with_velocity(func, initial_params;
+    initial_position,
+    initial_velocity,
+    target_position,
+    total_time,
+    dt = 0.01,
+    mass = 1.0,
+    other_forces = Force[]
+)
+    function loss(params)
+        callable_force = CallableForce(func, params)
+        all_forces = [other_forces..., callable_force]
+        
+        final_pos = simulate_forward(initial_position, initial_velocity, all_forces, dt, total_time; mass=mass)
+        return sum((final_pos - target_position).^2)
+    end
+    function grad!(g, x)
+        g .= ForwardDiff.gradient(loss, x)
+    end
+    result = optimize(loss, grad!, initial_params, LBFGS())
     return Optim.minimizer(result), Optim.minimum(result)
 end
 
