@@ -1,9 +1,6 @@
-using Pkg
-Pkg.develop(path="/Users/yashsolanki/Desktop/opensource/DiffSim.jl")
-
 using DiffSim
 
-function spacecraft_maneuver()
+function force_example()
     initial_pos = [0.0, 0.0]
     initial_vel = [5.0, 2.0]
     target_pos = [100.0, 50.0]
@@ -25,4 +22,4 @@ end
 println("Force required to move an object from the origin starting with v=[5.0, 2.0] to [100.0, 50.0]")
 println("=" ^ 40)
 
-spacecraft_maneuver()
+force_example()
